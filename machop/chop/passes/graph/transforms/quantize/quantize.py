@@ -228,3 +228,54 @@ def quantize_transform_pass(graph, pass_args=None):
     # link the model with graph
     graph.model = torch.fx.GraphModule(graph.model, graph.fx_graph)
     return graph, {}
+
+
+import torch as nn
+
+def instantiate_linear(in_features, out_features, bias):
+    if bias is not None:
+        bias = True
+    return nn.Linear(
+        in_features=in_features,
+        out_features=out_features,
+        bias=bias)
+
+def instantiate_ReLU(inplace):
+    return nn.ReLU(inplace=inplace)
+
+def redefine_linear_transform_pass(graph, pass_args=None):
+    main_config = pass_args.pop('config')
+    print("\nmain_config:\n",main_config)
+    default = main_config.pop('default', None)
+    if default is None:
+        raise ValueError(f"default value must be provided.")
+    i = 0
+    for node in graph.fx_graph.nodes:  # node.name = e.g. seq_blocks_2
+        i += 1
+        # if node name is not matched, it won't be tracked
+        config = main_config.get(node.name, default)['config']  # e.g., {'name': 'output_only', 'channel_multiplier': 2}
+        name = config.get("name", None)  # e.g., "both", "input_only", "output_only"
+
+        if name is not None:
+            ori_module = graph.modules[node.target]  # e.g., node.target = "seq_blocks.4"
+            if isinstance(ori_module, nn.ReLU):
+                inplace = ori_module.inplace
+                if name == "inplace":
+                    inplace = inplace * config["channel_multiplier"]
+                new_module = instantiate_ReLU(inplace)
+            elif isinstance(ori_module, nn.Linear):
+                in_features = ori_module.in_features     # e.g., in_features = 16
+                out_features = ori_module.out_features   # e.g., in_features = 5
+                bias = ori_module.bias
+                if name == "output_only":
+                    out_features = out_features * config["channel_multiplier"]
+                elif name == "both":
+                    in_features = in_features * config["channel_multiplier1"]
+                    out_features = out_features * config["channel_multiplier2"]
+                elif name == "input_only":
+                    in_features = in_features * config["channel_multiplier"]
+                new_module = instantiate_linear(in_features, out_features, bias)
+            parent_name, name = get_parent_name(node.target)  # parent_name = seq_blocks, name = e.g. 3
+            setattr(graph.modules[parent_name], name, new_module)
+        #print("\n")
+    return graph, {}
