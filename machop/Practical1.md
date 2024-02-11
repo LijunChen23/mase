@@ -3,6 +3,25 @@
 ## Lab1
 
 ### 1. What is the impact of varying batch sizes and why?
+Batch size refers to the number of data samples used to update the model in each training iteration. Larger batch sizes 
+require more memory. They can speed up the training process because they can make more efficient use of hardware 
+resources. However, if the batch is too large, it may lead to memory overflow. In contrast, smaller batches usually mean 
+that the network is updated more frequently during training, which may lead to faster convergence. However, this can 
+also make the training process more unstable. Additionally, smaller batch sizes may lead to better generalisation 
+ability. This is because the noise caused by smaller batches may help avoid overfitting.
+
+Five different tests are conducted to check the performance of the model with different batch sizes from 32 to 512, the 
+training and test results are recorded in the table below. As can be seen, the smaller the batch size, the larger the 
+test accuracy, but the slower the training time.
+
+| Dataset | Model     | Parameters | Learning-Rate | Max-Epochs | Batch-Size | Training Accuracy | Validation Accuracy | Test Accuracy | time  |
+|---------|-----------|------------|---------------|------------|------------|-------------------|---------------------|---------------|-------|
+| jsc     | jsc-tiny  | 117        | 1.00E-05      | 10         | 32         | 0.5               | 0.572               | 0.572         | 01:40 |
+| jsc     | jsc-tiny  | 117        | 1.00E-05      | 10         | 64         | 0.5               | 0.55                | 0.55          | 00:51 |
+| jsc     | jsc-tiny  | 117        | 1.00E-05      | 10         | 128        | 0.588             | 0.531               | 0.531         | 00:26 |
+| jsc     | jsc-tiny  | 117        | 1.00E-05      | 10         | 256        | 0.561             | 0.513               | 0.513         | 00:14 |
+| jsc     | jsc-tiny  | 117        | 1.00E-05      | 10         | 512        | 0.487             | 0.471               | 0.47          | 00:08 |
+
 
 ### 2. What is the impact of varying maximum epoch number?
 The variation in the maximum number of epochs impacts model training in the following ways:
@@ -25,22 +44,51 @@ any benefits.
 Therefore, the choice of maximum number of epochs should be based on the specific application context, the size and 
 complexity of the dataset, and the characteristics of the model such as learning rate.
 
+Five different tests are conducted to check the performance of the model under different max epochs from 10 to 200, the 
+training and test results are recorded in the table below. As can be seen, with larger max-epochs, the training and test 
+accuracies increase, however, as the number of max epochs increases further, the accuracy gradually saturates. According 
+to the table, when the max epoch increased from 100 to 200, the test accuracy only increased by 0.014. Meanwhile, 
+the training with max epochs of 200 exhibits overfitting since training accuracy is much larger than the test accuracy, 
+meaning that the model performs well on the training data but poorly on new, unseen data.
+
+| Dataset | Model    | Parameters | Learning-Rate | Max-Epochs | Batch-Size | Training Accuracy | Validation Accuracy | Test Accuracy |
+|---------|----------|------------|---------------|------------|------------|-------------------|---------------------|---------------|
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 10         | 128        | 0.588             | 0.531               | 0.531         |
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 20         | 128        | 0.441             | 0.553               | 0.553         |
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 50         | 128        | 0.618             | 0.671               | 0.67          |
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 100        | 128        | 0.632             | 0.698               | 0.696         |
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 200        | 128        | 0.794             | 0.709               | 0.71          |
+
+
 ### 3. What is happening with a large learning and what is happening with a small learning rate and why? What is the relationship between learning rates and batch sizes?
+
+Six trials are conducted with their results recorded in the table below. The impact and reason of large and small 
+learning rates are:
+
 * **Large Learning Rate**: 
-It can cause rapid changes in model parameters, thereby accelerating convergence.However, an 
-excessively large learning rate might lead to instability in the training process, or even causing the model diverge. 
-Another possible issue is that excessively large learning rate may cause the model to skip over the best values during 
-the search for an optimal solution because the updates are too large each time.
+It can cause rapid changes in model parameters, thereby accelerating convergence. However, an excessively large learning 
+rate might lead to instability in the training process, or even causing the model diverge (like the trial with learning 
+rate of 1 in the table below). Another possible issue is that excessively large learning rate may cause the model to 
+skip over the best values during the search for an optimal solution because the updates are too large each time.
 
 * **Small Learning Rate**: 
-It can make the training process more stable, but it may slow down model convergence, 
-requiring more epochs. Meanwhile, an overly small learning rate might cause the model to get stuck in local optima, 
-especially in complex loss functions.
+It can make the training process more stable, but it may slow down model convergence, requiring more epochs. Meanwhile, 
+an overly small learning rate might cause the model to get stuck in local optima, especially in complex loss functions.
+
+| Dataset | Model    | Parameters | Learning-Rate | Max-Epochs | Batch-Size | Training Accuracy | Validation Accuracy | Test Accuracy |
+|---------|----------|------------|---------------|------------|------------|-------------------|---------------------|---------------|
+| jsc     | jsc-tiny | 117        | 1.00E-05      | 10         | 128        | 0.588             | 0.531               | 0.531         |
+| jsc     | jsc-tiny | 117        | 1.00E-04      | 10         | 128        | 0.706             | 0.693               | 0.693         |
+| jsc     | jsc-tiny | 117        | 1.00E-03      | 10         | 128        | 0.721             | 0.711               | 0.717         |
+| jsc     | jsc-tiny | 117        | 1.00E-02      | 10         | 128        | 0.603             | 0.574               | 0.578         |
+| jsc     | jsc-tiny | 117        | 1.00E-01      | 10         | 128        | 0.588             | 0.563               | 0.566         |
+| jsc     | jsc-tiny | 117        | 1.00E-00      | 10         | 128        | 0.25              | 0.202               | 0.201         |
 
 * **The relationship between learning rates and batch sizes**: 
 Large batch sizes often require higher learning rates because a large batch provides a more stable estimate of the 
 gradient, allowing for larger steps in learning. In contrast, small batch sizes might need smaller learning rates as the 
 direction of each update could be more volatile, and a smaller learning rate can prevent excessive adjustments.
+
 
 ### 4. Implement a network that has in total around 10x more parameters than the toy network.
 As the toy network has 327 trainable parameters, the new network should have around 3270 parameters. Thus, the new 
@@ -100,17 +148,18 @@ PHYSICAL_MODELS = {
 }
 ```
 
-Then by running the command line, the network is trained.
+Then by running the following command line, the network is trained.
 ```bash
 ./ch train jsc-10x jsc --max-epochs 10 --batch-size 256
 ```
 
-### 5.Test your implementation and evaluate its performance.
-The training and validation accuracies derived by running the command in the previous question is:
+The printed result is shown below, where the training accuracy is 0.730 and the validation accuracy of the final epoch 
+is 0.700
 ```
-Epoch 9: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3084/3084 [00:16<00:00, 183.06it/s, v_num=0, train_acc_step=0.730, val_acc_epoch=0.700, val_loss_epoch=0.933]
+Epoch 9: 100%|███████████████████████████████████████████████████████████████| 3084/3084 [00:16<00:00, 183.06it/s, v_num=0, train_acc_step=0.730, val_acc_epoch=0.700, val_loss_epoch=0.933]
 ```
 
+### 5.Test your implementation and evaluate its performance.
 Running the test command:
 ```bash
 ./ch test jsc-10x jsc --load ../mase_output/jsc-10x_classification_jsc_2024-02-10/software/training_ckpts/best.ckpt --load-type pl
@@ -127,9 +176,16 @@ Testing DataLoader 0: 100%|█████████████████�
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 
-Comparing to the jsc-tiny and jsc-toy, the new network achieves much better accuracy. However, due to the significantly 
-more trainable parameters, the new network exhibits a tendency of overfitting as the training accuracy is approximately 
-3% more than the test accuracy.
+By listing and comparing the training and test results of the new network and the jsc-toy and jsc-tiny model, it is 
+clear that the new network achieves much better accuracy. However, due to the significantly more trainable parameters, 
+the new network exhibits a tendency of overfitting as the training accuracy is approximately 3% more than the test 
+accuracy.
+
+| Model    | Parameters | Learning-Rate | Max-Epochs | Batch-Size | Training Accuracy | Validation Accuracy | Test Accuracy |
+|----------|------------|---------------|------------|------------|-------------------|---------------------|---------------|
+| jsc-tiny | 117        | 1.00E-05      | 10         | 256        | 0.561             | 0.513               | 0.513         |
+| jsc-toy  | 327        | 1.00E-05      | 10         | 256        | 0.602             | 0.623               | 0.619         |
+| jsc-10x  | 3.4 K      | 1.00E-05      | 10         | 256        | 0.730             | 0.700               | 0.698         |
 
 
 
@@ -165,25 +221,25 @@ outputs for each layer.
 
 #### Explanation of the printed jargons
 
-* **Placeholder**: 
+* `placeholder`: 
 Represents a node in the graph that stands for input data. It is where the model receives its input.
 
-* **get_attr**: 
+* `get_attr`: 
 It is a function used to retrieve a specified attribute or parameter from a model. It can be used to access weights, 
 biases, submodules, or other attributes of the model.
 
-* **call_function**: 
+* `call_function`: 
 Indicates a node in the graph that performs an operation by calling a function.
 
-* **call_method**: 
+* `call_method`: 
 Similar to call_function, but here it refers to the invocation of methods on objects, such as operations performed on a 
 torch.Tensor object.
 
-* **call_module**: 
+* `call_module`: 
 Indicates that a node in the graph performs an operation by calling a module. It is an operation used to invoke a 
 submodule within a model. It allows to call a submodule as if it were a function, passing inputs and obtaining outputs.
 
-* **output**: 
+* `output`: 
 The output node of the graph, representing the final output of the model.
 
 
@@ -471,7 +527,14 @@ the quantisation flow is successful.
 
 ### 6. Write code to show and verify that the weights of these layers are indeed quantised. You might need to go through the source code of the implementation of the quantisation pass and also the implementation of the Quantized Layers .
 
-The code snippet is shown below.
+The code snippet is shown below. It iterates over corresponding nodes in the original model graph and the quantised 
+model graph, checking if the weights of the layers (specifically linear layers) in both graphs are consistent by 
+using the `get_node_actual_target` function to obtain the actual target (i.e., layer) of each node. It then compares the 
+type and weights of corresponding layers in the original and quantised graphs. If a difference in weight types is found,
+(specifically Linear and LinearInteger), it prints out the weights of the corresponding layers from both graphs. As the 
+weights generated only present four digits which is not enough for verifying the quantisation, a random input was 
+generated and processed with the corresponding layer in both the original and quantised graphs to show the differences 
+in the outputs. As the outputs are changed, meaning that the weights are indeed quantised.
 ```
 import torch
 from chop.passes.graph.utils import get_node_actual_target
@@ -537,5 +600,84 @@ Output of the original graph:
 Output of the quantised graph:
  tensor([ 0.1914,  0.9180,  0.2656, -0.6914, -0.4453], grad_fn=<ViewBackward0>)
 ```
+
+### 7. Load your own pre-trained JSC network, and perform the quantisation using the command line interface.
+
+In the provided `jsc_toy_by_type.toml` file, the adjustment is as follows. This makes sure the pre-trained network is 
+loaded.
+
+```
+load_name = "/home/lijun/mase/mase_output/jsc-tiny_classification_jsc_2024-02-06/software/training_ckpts/best.ckpt"
+load_type = "pl"
+```
+Then by running the command:
+```
+./ch transform --config configs/examples/jsc_toy_by_type.toml --task cls --cpu=0
+```
+The result is demonstrated below, indicating that the quantisation is performed successfully.
+```
+Seed set to 0
++-------------------------+--------------------------+--------------------------+-----------------+--------------------------+
+| Name                    |         Default          |       Config. File       | Manual Override |        Effective         |
++-------------------------+--------------------------+--------------------------+-----------------+--------------------------+
+| task                    |      classification      |           cls            |       cls       |           cls            |
+| load_name               |           None           | /home/lijun/mase/mase_ou |                 | /home/lijun/mase/mase_ou |
+|                         |                          | tput/jsc-tiny_classifica |                 | tput/jsc-tiny_classifica |
+|                         |                          | tion_jsc_2024-02-06/soft |                 | tion_jsc_2024-02-06/soft |
+|                         |                          | ware/training_ckpts/best |                 | ware/training_ckpts/best |
+|                         |                          |          .ckpt           |                 |          .ckpt           |
+| load_type               |            mz            |            pl            |                 |            pl            |
+| batch_size              |           128            |           512            |                 |           512            |
+| to_debug                |          False           |                          |                 |          False           |
+| log_level               |           info           |                          |                 |           info           |
+| report_to               |       tensorboard        |                          |                 |       tensorboard        |
+| seed                    |            0             |            42            |                 |            42            |
+| quant_config            |           None           |                          |                 |           None           |
+| training_optimizer      |           adam           |                          |                 |           adam           |
+| trainer_precision       |         16-mixed         |                          |                 |         16-mixed         |
+| learning_rate           |          1e-05           |           0.01           |                 |           0.01           |
+| weight_decay            |            0             |                          |                 |            0             |
+| max_epochs              |            20            |            5             |                 |            5             |
+| max_steps               |            -1            |                          |                 |            -1            |
+| accumulate_grad_batches |            1             |                          |                 |            1             |
+| log_every_n_steps       |            50            |            5             |                 |            5             |
+| num_workers             |            16            |                          |        0        |            0             |
+| num_devices             |            1             |                          |                 |            1             |
+| num_nodes               |            1             |                          |                 |            1             |
+| accelerator             |           auto           |           gpu            |                 |           gpu            |
+| strategy                |           auto           |                          |                 |           auto           |
+| is_to_auto_requeue      |          False           |                          |                 |          False           |
+| github_ci               |          False           |                          |                 |          False           |
+| disable_dataset_cache   |          False           |                          |                 |          False           |
+| target                  |   xcu250-figd2104-2L-e   |                          |                 |   xcu250-figd2104-2L-e   |
+| num_targets             |           100            |                          |                 |           100            |
+| is_pretrained           |          False           |                          |                 |          False           |
+| max_token_len           |           512            |                          |                 |           512            |
+| project_dir             | /home/lijun/mase/mase_ou |                          |                 | /home/lijun/mase/mase_ou |
+|                         |           tput           |                          |                 |           tput           |
+| project                 |           None           |         jsc-tiny         |                 |         jsc-tiny         |
+| model                   |           None           |         jsc-tiny         |                 |         jsc-tiny         |
+| dataset                 |           None           |           jsc            |                 |           jsc            |
++-------------------------+--------------------------+--------------------------+-----------------+--------------------------+
+INFO     Initialising model 'jsc-tiny'...
+INFO     Initialising dataset 'jsc'...
+INFO     Project will be created at /home/lijun/mase/mase_output/jsc-tiny
+INFO     Transforming model 'jsc-tiny'...
+INFO     Loaded pytorch lightning checkpoint from /home/lijun/mase/mase_output/jsc-tiny_classification_jsc_2024-02-06/software/training_ckpts/best.ckpt
+INFO     Quantized graph histogram:
+INFO     
+| Original type   | OP           |   Total |   Changed |   Unchanged |
+|-----------------+--------------+---------+-----------+-------------|
+| BatchNorm1d     | batch_norm1d |       1 |         0 |           1 |
+| Linear          | linear       |       1 |         1 |           0 |
+| ReLU            | relu         |       2 |         0 |           2 |
+| output          | output       |       1 |         0 |           1 |
+| x               | placeholder  |       1 |         0 |           1 |
+INFO     Saved mase graph to /home/lijun/mase/mase_output/jsc-tiny/software/transform/transformed_ckpt
+INFO     Transformation is completed
+```
+
+
+
 
 
