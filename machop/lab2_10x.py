@@ -51,7 +51,7 @@ Set up the model
 
 Here we use the previously trained jsc-tiny model in lab 1 as an example.
 """
-CHECKPOINT_PATH = "/home/lijun/mase/mase_output/jsc-10x_classification_jsc_2024-02-06/software/training_ckpts/best.ckpt"
+CHECKPOINT_PATH = "/home/lijun/mase/mase_output/jsc-10x_classification_jsc_2024-02-10/software/training_ckpts/best.ckpt"
 model_info = get_model_info(model_name)
 model = get_model(
     model_name,

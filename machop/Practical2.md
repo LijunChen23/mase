@@ -6,18 +6,18 @@
 Exploring additional metrics to serve as quality indicators during the search process can significantly enhance the 
 evaluation and selection of models. Here, we discuss three such metrics: latency, model size, and the number of FLOPs.
 
-#### Latency
+* **Latency**:
 Latency measures the time it takes for a model to make a prediction after receiving input. It's crucial for real-time 
 applications where quick decision-making is essential. Optimizing for latency ensures that the model can operate 
 effectively within the time constraints of its intended application.
 
-#### Model Size
+* **Model Size**:
 The model size refers to the amount of memory required to store the model's parameters. It's a critical factor for 
 deploying models on devices with limited storage capacity. Smaller models are easier to deploy in resource-constrained 
 environments. Reducing model size can also decrease load times and memory usage, improving overall application 
 performance.
 
-#### Number of FLOPs
+* **Number of FLOPs**:
 FLOPs indicate the computational complexity of a model. It measures the number of floating-point calculations the model 
 performs during inference. Optimizing for FLOPs can lead to models that balance performance with resource utilization.
 
@@ -131,6 +131,14 @@ Best trial(s):
 |----+----------+------------------------------------+---------------------------------------------------+----------------------------------------------|
 |  0 |        2 | {'loss': 1.47, 'accuracy': 0.414}  | {'average_bitwidth': 2.0, 'memory_density': 16.0} | {'accuracy': 0.414, 'average_bitwidth': 0.4} |
 |  1 |        3 | {'loss': 1.468, 'accuracy': 0.416} | {'average_bitwidth': 8.0, 'memory_density': 4.0}  | {'accuracy': 0.416, 'average_bitwidth': 1.6} |
+
+
+Best trial(s):
+|    |   number | software_metrics                   | hardware_metrics                                  | scaled_metrics                               |
+|----+----------+------------------------------------+---------------------------------------------------+----------------------------------------------|
+|  0 |        2 | {'loss': 1.459, 'accuracy': 0.439} | {'average_bitwidth': 8.0, 'memory_density': 4.0}  | {'accuracy': 0.439, 'average_bitwidth': 1.6} |
+|  1 |        3 | {'loss': 1.457, 'accuracy': 0.422} | {'average_bitwidth': 4.0, 'memory_density': 8.0}  | {'accuracy': 0.422, 'average_bitwidth': 0.8} |
+|  2 |       11 | {'loss': 1.484, 'accuracy': 0.42}  | {'average_bitwidth': 2.0, 'memory_density': 16.0} | {'accuracy': 0.42, 'average_bitwidth': 0.4}  |
 ```
 
 The performance of brute-force search method is:
@@ -141,6 +149,14 @@ Best trial(s):
 |----+----------+------------------------------------+---------------------------------------------------+----------------------------------------------|
 |  0 |        3 | {'loss': 1.496, 'accuracy': 0.416} | {'average_bitwidth': 2.0, 'memory_density': 16.0} | {'accuracy': 0.416, 'average_bitwidth': 0.4} |
 |  1 |        4 | {'loss': 1.485, 'accuracy': 0.422} | {'average_bitwidth': 8.0, 'memory_density': 4.0}  | {'accuracy': 0.422, 'average_bitwidth': 1.6} |
+
+
+INFO     Best trial(s):
+Best trial(s):
+|    |   number | software_metrics                   | hardware_metrics                                  | scaled_metrics                               |
+|----+----------+------------------------------------+---------------------------------------------------+----------------------------------------------|
+|  0 |        0 | {'loss': 1.44, 'accuracy': 0.451}  | {'average_bitwidth': 16.0, 'memory_density': 2.0} | {'accuracy': 0.451, 'average_bitwidth': 3.2} |
+|  1 |        2 | {'loss': 1.491, 'accuracy': 0.426} | {'average_bitwidth': 2.0, 'memory_density': 16.0} | {'accuracy': 0.426, 'average_bitwidth': 0.4} |
 ```
 
 In the results provided, the best configuration found using TPE search achieved an accuracy of 0.416. The best 

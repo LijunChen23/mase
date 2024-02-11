@@ -37,15 +37,15 @@ class JSC_10x(nn.Module):
             # 1st LogicNets Layer
             nn.BatchNorm1d(16),  # input_quant       # 0
             nn.ReLU(16),  # 1
-            nn.Linear(16, 32),  # linear              # 2
-            nn.BatchNorm1d(32),  # output_quant       # 3
-            nn.ReLU(32),  # 4
+            nn.Linear(16, 60),  # linear              # 2
+            nn.BatchNorm1d(60),  # output_quant       # 3
+            nn.ReLU(60),  # 4
             # 2nd LogicNets Layer
-            nn.Linear(32, 16),  # 5
-            nn.BatchNorm1d(16),  # 6
-            nn.ReLU(16),  # 7
+            nn.Linear(60, 32),  # 5
+            nn.BatchNorm1d(32),  # 6
+            nn.ReLU(32),  # 7
             # 3rd LogicNets Layer
-            nn.Linear(16, 5),  # 8
+            nn.Linear(32, 5),  # 8
             nn.BatchNorm1d(5),  # 9
             nn.ReLU(5),
         )
@@ -142,6 +142,7 @@ def get_jsc_tiny(info):
 
 def get_jsc_s(info):
     return JSC_S(info)
+
 
 def get_jsc_three_linear_layers(info):
     return JSC_Three_Linear_Layers(info)
