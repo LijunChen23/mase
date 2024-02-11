@@ -213,16 +213,14 @@ for ori_n, quan_n in zip(ori_mg.fx_graph.nodes, mg.fx_graph.nodes):
     quan_target = get_node_actual_target(quan_n)
 
     if type(ori_target) != type(quan_target):
-        print(ori_target, quan_target)
-        print("Weights of original graph:")
-        print(ori_target.weight)
-        print("Weights of the transformed graph:")
-        print(quan_target.weight)
+        print("\nOriginal graph target:", ori_target)
+        print("\nQuantised graph target:", quan_target)
+
+        print("\nWeights of original graph:", ori_target.weight)
+        print("\nWeights of the quantised graph:", quan_target.weight)
 
         random_input = torch.randn(quan_target.in_features)
-        print("random_input", random_input)
-        ori_output = ori_target(random_input)
-        print("ori_output", ori_output)
-        quan_output = quan_target(random_input)
-        print("quan_output", quan_output)
+        print("\nRandom input for the graph:\n", random_input)
+        print("\nOutput of the original graph:\n", ori_target(random_input))
+        print("\nOutput of the quantised graph:\n", quan_target(random_input))
 
