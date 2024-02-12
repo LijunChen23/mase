@@ -205,22 +205,11 @@ print(df)
 
 ########################################################################################################################
 # Q6
-import torch
-from chop.passes.graph.utils import get_node_actual_target
 
-for ori_n, quan_n in zip(ori_mg.fx_graph.nodes, mg.fx_graph.nodes):
-    ori_target = get_node_actual_target(ori_n)
-    quan_target = get_node_actual_target(quan_n)
+for n in ori_mg.fx_graph.nodes:
+    if type(n.meta["mase"].module).__name__ == "Linear":
+        print("\nWeights of original graph:", n.meta["mase"].module.weight)
 
-    if type(ori_target) != type(quan_target):
-        print("\nOriginal graph target:", ori_target)
-        print("\nQuantised graph target:", quan_target)
-
-        print("\nWeights of original graph:", ori_target.weight)
-        print("\nWeights of the quantised graph:", quan_target.weight)
-
-        random_input = torch.randn(quan_target.in_features)
-        print("\nRandom input for the graph:\n", random_input)
-        print("\nOutput of the original graph:\n", ori_target(random_input))
-        print("\nOutput of the quantised graph:\n", quan_target(random_input))
-
+for n in mg.fx_graph.nodes:
+    if type(n.meta["mase"].module).__name__ == "LinearInteger":
+        print("\nWeights of the quantised graph:\n", n.meta["mase"].module.w_quantizer(n.meta["mase"].module.weight))

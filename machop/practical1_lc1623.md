@@ -528,42 +528,29 @@ the quantisation flow is successful.
 ### 6. Write code to show and verify that the weights of these layers are indeed quantised. You might need to go through the source code of the implementation of the quantisation pass and also the implementation of the Quantized Layers .
 
 The code snippet is shown below. It iterates over corresponding nodes in the original model graph and the quantised 
-model graph, checking if the weights of the layers (specifically linear layers) in both graphs are consistent by 
-using the `get_node_actual_target` function to obtain the actual target (i.e., layer) of each node. It then compares the 
-type and weights of corresponding layers in the original and quantised graphs. If a difference in weight types is found,
-(specifically Linear and LinearInteger), it prints out the weights of the corresponding layers from both graphs. As the 
-weights generated only present four digits which is not enough for verifying the quantisation, a random input was 
-generated and processed with the corresponding layer in both the original and quantised graphs to show the differences 
-in the outputs. As the outputs are changed, meaning that the weights are indeed quantised.
+model graph, if the node is the one that should be quantised or has been quantised, then the corresponding weights of 
+that layer are printed. 
+
+
 ```
-import torch
-from chop.passes.graph.utils import get_node_actual_target
+for n in ori_mg.fx_graph.nodes:
+    if type(n.meta["mase"].module).__name__ == "Linear":
+        print("\nWeights of original graph:", n.meta["mase"].module.weight)
 
-for ori_n, quan_n in zip(ori_mg.fx_graph.nodes, mg.fx_graph.nodes):
-    ori_target = get_node_actual_target(ori_n)
-    quan_target = get_node_actual_target(quan_n)
-
-    if type(ori_target) != type(quan_target):
-        print(ori_target, quan_target)
-        print("Weights of original graph:")
-        print(ori_target.weight)
-        print("Weights of the transformed graph:")
-        print(quan_target.weight)
-
-        random_input = torch.randn(quan_target.in_features)
-        print("random_input", random_input)
-        ori_output = ori_target(random_input)
-        print("ori_output", ori_output)
-        quan_output = quan_target(random_input)
-        print("quan_output", quan_output)
+for n in mg.fx_graph.nodes:
+    if type(n.meta["mase"].module).__name__ == "LinearInteger":
+        print("\nWeights of the quantised graph:\n", n.meta["mase"].module.w_quantizer(n.meta["mase"].module.weight))
 ```
 
-The generated result from the above code is:
+The generated result from the above code is as follows. In the second tensor from the printed result, the values are 
+multiples of a smaller base value (e.g., 0.0625), indicating a limited set of values that the weights can take. This is 
+a common characteristic of quantised tensors, where the original floating-point values are mapped to a finite set of 
+discrete values. Additionally, when comparing the values of the first tensor (which are floating-point numbers with more 
+variance and precision) to the second tensor (which shows reduced precision and a pattern of discrete steps), the second 
+tensor's values align with the characteristics of quantised weights. The values in the quantised tensor are rounded to 
+the nearest value in the quantised set (e.g., -0.1250, 0.0000, 0.0625, etc.).
+
 ```
-Original graph target: Linear(in_features=16, out_features=5, bias=True)
-
-Quantised graph target: LinearInteger(in_features=16, out_features=5, bias=True)
-
 Weights of original graph: Parameter containing:
 tensor([[-0.0689,  0.2381, -0.1237, -0.1131, -0.0119,  0.1405,  0.0843,  0.2918,
           0.0660,  0.1715,  0.0312,  0.0546, -0.1353, -0.0641, -0.0154,  0.1146],
@@ -577,28 +564,18 @@ tensor([[-0.0689,  0.2381, -0.1237, -0.1131, -0.0119,  0.1405,  0.0843,  0.2918,
           0.0770,  0.1298,  0.1352,  0.1425, -0.0259, -0.2731,  0.1075, -0.0879]],
        requires_grad=True)
 
-Weights of the quantised graph: Parameter containing:
-tensor([[-0.0689,  0.2381, -0.1237, -0.1131, -0.0119,  0.1405,  0.0843,  0.2918,
-          0.0660,  0.1715,  0.0312,  0.0546, -0.1353, -0.0641, -0.0154,  0.1146],
-        [ 0.1873,  0.0637, -0.2517, -0.1785,  0.0107,  0.1331, -0.0340,  0.2173,
-         -0.0231,  0.0446,  0.2467, -0.1569, -0.1384,  0.0051, -0.1813,  0.1317],
-        [-0.0786, -0.0300, -0.2051, -0.3175, -0.1980,  0.1422,  0.1053,  0.0612,
-          0.0046, -0.1761,  0.0433, -0.2522, -0.2328, -0.1842,  0.1206,  0.0641],
-        [-0.1261, -0.0709,  0.0943,  0.1820,  0.0368, -0.0264,  0.1351, -0.1875,
-          0.0157, -0.2376, -0.2172, -0.1702,  0.0714,  0.0563, -0.2126,  0.0153],
-        [ 0.0501,  0.0420,  0.0959,  0.1444,  0.2406,  0.3258, -0.2193, -0.1061,
-          0.0770,  0.1298,  0.1352,  0.1425, -0.0259, -0.2731,  0.1075, -0.0879]],
-       requires_grad=True)
-
-Random input for the graph:
- tensor([ 0.5319,  0.2876, -0.7508, -0.2564, -0.8496, -0.1951, -0.7838,  0.7940,
-        -0.2874,  0.8280, -0.1643, -0.7469,  0.3893,  0.3645, -0.7502, -0.3598])
-
-Output of the original graph:
- tensor([ 0.1412,  0.8343,  0.3334, -0.6339, -0.4795], grad_fn=<ViewBackward0>)
-
-Output of the quantised graph:
- tensor([ 0.1914,  0.9180,  0.2656, -0.6914, -0.4453], grad_fn=<ViewBackward0>)
+Weights of the quantised graph:
+ tensor([[-0.0625,  0.2500, -0.1250, -0.1250, -0.0000,  0.1250,  0.0625,  0.3125,
+          0.0625,  0.1875,  0.0000,  0.0625, -0.1250, -0.0625, -0.0000,  0.1250],
+        [ 0.1875,  0.0625, -0.2500, -0.1875,  0.0000,  0.1250, -0.0625,  0.1875,
+         -0.0000,  0.0625,  0.2500, -0.1875, -0.1250,  0.0000, -0.1875,  0.1250],
+        [-0.0625, -0.0000, -0.1875, -0.3125, -0.1875,  0.1250,  0.1250,  0.0625,
+          0.0000, -0.1875,  0.0625, -0.2500, -0.2500, -0.1875,  0.1250,  0.0625],
+        [-0.1250, -0.0625,  0.1250,  0.1875,  0.0625, -0.0000,  0.1250, -0.1875,
+          0.0000, -0.2500, -0.1875, -0.1875,  0.0625,  0.0625, -0.1875,  0.0000],
+        [ 0.0625,  0.0625,  0.1250,  0.1250,  0.2500,  0.3125, -0.2500, -0.1250,
+          0.0625,  0.1250,  0.1250,  0.1250, -0.0000, -0.2500,  0.1250, -0.0625]],
+       grad_fn=<IntegerQuantizeBackward>)
 ```
 
 ### 7. Load your own pre-trained JSC network, and perform the quantisation using the command line interface.
