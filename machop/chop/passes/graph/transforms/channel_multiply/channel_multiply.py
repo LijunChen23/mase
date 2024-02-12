@@ -14,9 +14,8 @@ from ...utils import (
     get_node_target_by_name,
 )
 
-from .modify import create_new_fn, create_new_module
-from .quant_parsers import parse_node_config, relink_node_meta, update_quant_meta_param
-from .summary import graph_iterator_compare_nodes, graph_iterator_node_histogram
+from ..quantize.modify import create_new_fn, create_new_module
+from ..quantize.quant_parsers import parse_node_config, relink_node_meta, update_quant_meta_param
 
 logger = logging.getLogger(__name__)
 
@@ -195,36 +194,48 @@ def graph_iterator_quantize_by_regex_name(graph, config: dict):
     return graph
 
 
-def quantize_transform_pass(graph, pass_args=None):
-    """
-    Apply quantization transformation to the given graph.
+def instantiate_linear(in_features, out_features, bias):
+    if bias is not None:
+        bias = True
+    return torch.nn.Linear(
+        in_features=in_features,
+        out_features=out_features,
+        bias=bias)
 
-    :param graph: The input graph to be transformed.
-    :type graph: MaseGraph
+def instantiate_ReLU(inplace):
+    return torch.nn.ReLU(inplace=inplace)
 
-    :param pass_args: Additional arguments for the transformation.
-    :type pass_args: dict, optional
+def redefine_linear_transform_pass(graph, pass_args=None):
+    main_config = pass_args.pop('config')
+    default = main_config.pop('default', None)
+    if default is None:
+        raise ValueError(f"default value must be provided.")
+    i = 0
+    for node in graph.fx_graph.nodes:  # node.name = e.g. seq_blocks_2
+        i += 1
+        # if node name is not matched, it won't be tracked
+        config = main_config.get(node.name, default)['config']  # e.g., {'name': 'output_only', 'channel_multiplier': 2}
+        name = config.get("name", None)  # e.g., "both", "input_only", "output_only"
 
-    :return: The transformed graph.
-    :rtype: tuple
-    :raises ValueError: If the quantize "by" argument is unsupported.
-
-
-    - pass_args
-        - by -> str : different quantization schemes choose from ["type", "name", "regx_name"]
-    """
-
-    by = pass_args.pop("by")
-    match by:
-        case "type":
-            graph = graph_iterator_quantize_by_type(graph, pass_args)
-        case "name":
-            graph = graph_iterator_quantize_by_name(graph, pass_args)
-        case "regex_name":
-            graph = graph_iterator_quantize_by_regex_name(graph, pass_args)
-        case _:
-            raise ValueError(f'Unsupported quantize "by": {by}')
-
-    # link the model with graph
-    graph.model = torch.fx.GraphModule(graph.model, graph.fx_graph)
+        if name is not None:
+            ori_module = graph.modules[node.target]  # e.g., node.target = "seq_blocks.4"
+            if isinstance(ori_module, torch.nn.ReLU):
+                inplace = ori_module.inplace
+                if name == "inplace":
+                    inplace = inplace * config["channel_multiplier"]
+                new_module = instantiate_ReLU(inplace)
+            elif isinstance(ori_module, torch.nn.Linear):
+                in_features = ori_module.in_features     # e.g., in_features = 16
+                out_features = ori_module.out_features   # e.g., out_features = 5
+                bias = ori_module.bias
+                if name == "output_only":
+                    out_features = out_features * config["channel_multiplier"]
+                elif name == "both":
+                    in_features = in_features * config["channel_multiplier_input"]
+                    out_features = out_features * config["channel_multiplier_output"]
+                elif name == "input_only":
+                    in_features = in_features * config["channel_multiplier"]
+                new_module = instantiate_linear(in_features, out_features, bias)
+            parent_name, name = get_parent_name(node.target)  # parent_name = seq_blocks, name = e.g. 3
+            setattr(graph.modules[parent_name], name, new_module)
     return graph, {}

@@ -131,8 +131,8 @@ def instantiate_ReLU(inplace):
 
 
 def redefine_linear_transform_pass(graph, pass_args=None):
+    print("pass_args:\n", pass_args)
     main_config = pass_args.pop('config')
-    print("\nmain_config:\n",main_config)
     default = main_config.pop('default', None)
     if default is None:
         raise ValueError(f"default value must be provided.")
@@ -141,6 +141,7 @@ def redefine_linear_transform_pass(graph, pass_args=None):
         i += 1
         # if node name is not matched, it won't be tracked
         config = main_config.get(node.name, default)['config']  # e.g., {'name': 'output_only', 'channel_multiplier': 2}
+        print("\nmain_config.get(node.name, default):\n", main_config.get(node.name, default))
         name = config.get("name", None)  # e.g., "both", "input_only", "output_only"
 
         if name is not None:
@@ -152,24 +153,64 @@ def redefine_linear_transform_pass(graph, pass_args=None):
                 new_module = instantiate_ReLU(inplace)
             elif isinstance(ori_module, nn.Linear):
                 in_features = ori_module.in_features     # e.g., in_features = 16
-                out_features = ori_module.out_features   # e.g., in_features = 5
+                out_features = ori_module.out_features   # e.g., out_features = 5
                 bias = ori_module.bias
                 if name == "output_only":
                     out_features = out_features * config["channel_multiplier"]
                 elif name == "both":
-                    in_features = in_features * config["channel_multiplier1"]
-                    out_features = out_features * config["channel_multiplier2"]
+                    in_features = in_features * config["channel_multiplier_input"]
+                    out_features = out_features * config["channel_multiplier_output"]
                 elif name == "input_only":
                     in_features = in_features * config["channel_multiplier"]
                 new_module = instantiate_linear(in_features, out_features, bias)
             parent_name, name = get_parent_name(node.target)  # parent_name = seq_blocks, name = e.g. 3
             setattr(graph.modules[parent_name], name, new_module)
-        #print("\n")
     return graph, {}
 
 
+pass_config = {
+    "by": "name",
+    "default": {"config": {"name": None}},
+    "seq_blocks_2": {
+        "config": {
+            "name": "output_only",
+            "channel_multiplier": 2,
+        }
+    },
+    "seq_blocks_3": {
+        "config": {
+            "name": "inplace",
+            "channel_multiplier": 2,
+        }
+    },
+    "seq_blocks_4": {
+        "config": {
+            "name": "both",
+            "channel_multiplier_input": 2,
+            "channel_multiplier_output": 4,
+        }
+    },
+    "seq_blocks_5": {
+        "config": {
+            "name": "inplace",
+            "channel_multiplier": 4,
+        }
+    },
+    "seq_blocks_6": {
+        "config": {
+            "name": "input_only",
+            "channel_multiplier": 4,
+        }
+    },
+}
 
-import copy
+from chop.passes.graph import report_graph_analysis_pass
+# this performs the architecture transformation based on the config
+mg, _ = redefine_linear_transform_pass(graph=mg, pass_args={"config": pass_config})
+_ = report_graph_analysis_pass(mg)
+
+
+'''import copy
 
 
 search_spaces = []
@@ -239,7 +280,7 @@ print("max_acc:", max_acc)
 max_acc_index = recorded_accs.index(max_acc)
 max_acc_search_space = search_spaces[max_acc_index]
 print("max_acc_search_space:", max_acc_search_space)
-
+'''
 
 
 

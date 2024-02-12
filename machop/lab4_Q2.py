@@ -65,23 +65,6 @@ This time we are going to use a slightly different network, so we define it as a
 from torch import nn
 from chop.passes.graph.utils import get_parent_name
 
-# define a new model
-"""
-class JSC_Three_Linear_Layers(nn.Module):
-    def __init__(self):
-        super(JSC_Three_Linear_Layers, self).__init__()
-        self.seq_blocks = nn.Sequential(
-            nn.BatchNorm1d(16),  # 0
-            nn.ReLU(16),  # 1
-            nn.Linear(16, 16),  # linear  2
-            nn.Linear(16, 16),  # linear  3
-            nn.Linear(16, 5),   # linear  4
-            nn.ReLU(5),  # 5
-        )
-
-    def forward(self, x):
-        return self.seq_blocks(x)
-"""
 
 # define a new model
 class JSC_Three_Linear_Layers(nn.Module):
@@ -100,8 +83,6 @@ class JSC_Three_Linear_Layers(nn.Module):
 
     def forward(self, x):
         return self.seq_blocks(x)
-
-
 
 
 model = JSC_Three_Linear_Layers()
@@ -132,9 +113,7 @@ def instantiate_ReLU(inplace):
 
 def redefine_linear_transform_pass(graph, pass_args=None):
     main_config = pass_args.pop('config')
-    print("main_config:\n",main_config)
     default = main_config.pop('default', None)
-    print("default:\n",default)
     if default is None:
         raise ValueError(f"default value must be provided.")
     i = 0
@@ -146,14 +125,11 @@ def redefine_linear_transform_pass(graph, pass_args=None):
 
         if name is not None:
             ori_module = graph.modules[node.target]  # e.g., node.target = "seq_blocks.4"
-            print("ori_module:\n", ori_module)
             if isinstance(ori_module, nn.ReLU):
                 inplace = ori_module.inplace
                 if name == "inplace":
                     inplace = inplace * config["channel_multiplier"]
-                print("inplace:\n", inplace)
                 new_module = instantiate_ReLU(inplace)
-                print("new_module:\n", new_module)
             elif isinstance(ori_module, nn.Linear):
                 in_features = ori_module.in_features     # e.g., in_features = 16
                 out_features = ori_module.out_features   # e.g., in_features = 5
@@ -168,35 +144,8 @@ def redefine_linear_transform_pass(graph, pass_args=None):
                 new_module = instantiate_linear(in_features, out_features, bias)
             parent_name, name = get_parent_name(node.target)  # parent_name = seq_blocks, name = e.g. 3
             setattr(graph.modules[parent_name], name, new_module)
-        print("\n")
     return graph, {}
 
-
-"""
-pass_config = {
-    "by": "name",
-    "default": {"config": {"name": None}},
-    "seq_blocks_2": {
-        "config": {
-            "name": "output_only",
-            # weight
-            "channel_multiplier": 2,
-        }
-    },
-    "seq_blocks_3": {
-        "config": {
-            "name": "both",
-            "channel_multiplier": 2,
-        }
-    },
-    "seq_blocks_4": {
-        "config": {
-            "name": "input_only",
-            "channel_multiplier": 2,
-        }
-    },
-}
-"""
 
 pass_config = {
     "by": "name",
@@ -235,23 +184,7 @@ pass_config = {
 }
 
 
-"""# this performs the architecture transformation based on the config
-mg, _ = redefine_linear_transform_pass(
-    graph=mg, pass_args={"config": pass_config})"""
-
-
-"""
-#mg, _ = add_common_metadata_analysis_pass(mg, {"dummy_in": dummy_in})
-#mg, _ = add_software_metadata_analysis_pass(mg, None)
-
-from chop.passes.graph import report_graph_analysis_pass
-_ = report_graph_analysis_pass(mg)"""
-
-
-
-
 import copy
-
 
 search_spaces = []
 channel_multipliers = [2, 4, 8]
@@ -281,11 +214,8 @@ from torchmetrics.classification import MulticlassAccuracy
 metric = MulticlassAccuracy(num_classes=5)
 num_batchs = 5
 
-# This first loop is basically our search strategy,
-# in this case, it is a simple brute force search
+# This first loop is basically our search strategy, in this case, it is a simple brute force search
 recorded_accs = []
-
-
 for i, pass_config in enumerate(search_spaces):
     mg_new, _ = redefine_linear_transform_pass(graph=mg, pass_args={"config": pass_config})
     j = 0
@@ -307,18 +237,16 @@ for i, pass_config in enumerate(search_spaces):
     loss_avg = sum(losses) / len(losses)
     recorded_accs.append(acc_avg)
 
-print("recorded_accs", recorded_accs)
+print("Recorded accuracies", recorded_accs)
 max_acc = max(recorded_accs, key=lambda x: x.item())
-print("max_acc", max_acc)
+print("Maximum accuracy: ", max_acc)
 max_acc_index = recorded_accs.index(max_acc)
-print("max_acc_index", max_acc_index)
-max_acc_search_space = search_spaces[max_acc_index]
-print("max_acc_search_space", max_acc_search_space)
 max_acc_multiplier = channel_multipliers[max_acc_index]
-print("max_acc_multiplier", max_acc_multiplier)
+print("Corresponding channel multiplier for this accuracy: ", max_acc_multiplier)
 
 
-
+max_acc_search_space = search_spaces[max_acc_index]
+print("Corresponding search space for this accuracy: ", max_acc_search_space)
 
 
 

@@ -1,0 +1,1 @@
+from .channel_multiply import QUANTIZEABLE_OP, redefine_linear_transform_pass

@@ -2,7 +2,7 @@
 from copy import deepcopy
 from torch import nn
 from ..base import SearchSpaceBase
-from .....passes.graph.transforms.quantize import (
+from .....passes.graph.transforms.channel_multiply import (
     QUANTIZEABLE_OP,
     redefine_linear_transform_pass,
 )
@@ -13,7 +13,8 @@ from .....passes.graph import (
 )
 from .....passes.graph.utils import get_mase_op, get_mase_type
 from ..utils import flatten_dict, unflatten_dict
-from collections import defaultdict
+
+from .....passes.graph import report_graph_analysis_pass
 
 DEFAULT_CHANNEL_MULTIPLICATION_CONFIG = {
     "config": {"name": None}
@@ -54,9 +55,13 @@ class GraphSearchSpaceChannelMultiplier(SearchSpaceBase):
             )
             self.mg = mg
         if sampled_config is not None:
-            #print(f"Sampled config: {sampled_config}")
+            """
+            Modified function
+            """
             mg, _ = redefine_linear_transform_pass(self.mg, pass_args={"config": sampled_config})
         mg.model.to(self.accelerator)
+
+        _ = report_graph_analysis_pass(mg)
         return mg
 
     def _build_node_info(self):
@@ -147,15 +152,10 @@ class GraphSearchSpaceChannelMultiplier(SearchSpaceBase):
         """
         flattened_config = {}
         for k, v in indexes.items():
-            print("\nk:\n", k)
-            print("\nv:\n", v)
-            print("\nself.choices_flattened[k][v]\n", self.choices_flattened[k][v])
             flattened_config[k] = self.choices_flattened[k][v]
 
         config = unflatten_dict(flattened_config)
-        print("\nunflatten_dict(flattened_config):\n", config)
         config["default"] = self.default_config
-        print("\ndefault:\n", config)
         config["by"] = self.config["setup"]["by"]
-        print("\nby:\n", config)
+        print("\nconfig:\n", config)
         return config

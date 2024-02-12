@@ -156,7 +156,7 @@ def redefine_linear_transform_pass(graph, pass_args=None):
                 print("new_module:\n", new_module)
             elif isinstance(ori_module, nn.Linear):
                 in_features = ori_module.in_features     # e.g., in_features = 16
-                out_features = ori_module.out_features   # e.g., in_features = 5
+                out_features = ori_module.out_features   # e.g., out_features = 5
                 bias = ori_module.bias
                 if name == "output_only":
                     out_features = out_features * config["channel_multiplier"]

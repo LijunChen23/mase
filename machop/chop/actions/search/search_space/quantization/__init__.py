@@ -1,3 +1,2 @@
 from .graph import GraphSearchSpaceMixedPrecisionPTQ
-from .graph_lab4 import GraphSearchSpaceMultipier
 from .manual_hf_module import ManualHFModuleSearchSpaceMixedPrecisionPTQ
